@@ -26,7 +26,7 @@ const C = {
 
 /* ─── Fallback Data (used if fetch fails) ────────────────────────────────── */
 
-const TABS = ['MARKET INTEL', 'PM WORKFLOW', 'MVP EVIDENCE', 'HARD LINES'];
+const TABS = ['MARKET INTEL', 'PM WORKFLOW', 'MVP EVIDENCE', 'USE CASE PROFILE'];
 
 const FALLBACK_CONFIG = {
   tabs: {
@@ -52,13 +52,16 @@ const FALLBACK_CONFIG = {
       { label: 'Failure Mode', value: 'AI hallucination on body cam → fixed with Laplacian sharpness filter' },
       { label: 'Scale Model',  value: 'Optical Flow (CPU) → Gemini Flash · $288 → $30 per 1000hr' },
     ],
-    'HARD LINES': [
-      { label: '01', value: 'Never ship anything that could compromise evidence integrity' },
-      { label: '02', value: 'AI confidence always visible — never hidden from user' },
-      { label: '03', value: 'Reporting wrong AI result ≤1 user action' },
-      { label: '04', value: 'No slide decks. Prototypes talk.' },
-      { label: '05', value: 'Buffering = product failure' },
-      { label: '06', value: 'Frame rate, latency, snappiness = product decisions' },
+    'USE CASE PROFILE': [
+      { label: 'CLUSTER',            value: 'Review & Search' },
+      { label: 'PRIMARY USER',       value: 'Investigator' },
+      { label: 'EVIDENCE NODE',      value: 'Tag → Review' },
+      { label: 'DECISION NATURE',    value: 'Async Review' },
+      { label: 'STAGE STATUS',       value: 'Stage 1 complete · Demo v8.1 shipped' },
+      { label: 'TRUST & COMPLIANCE', value: 'Required · AI in scope' },
+      { label: 'COST ANALYSIS',      value: 'Required · $30/1000hr baseline set' },
+      { label: 'MARKET ANALYSIS',    value: 'Optional' },
+      { label: 'USER ANALYSIS',      value: 'Required · Validated with 2 users' },
     ],
   },
   starters: [
