@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /* ─── Config ─────────────────────────────────────────────────────────────── */
 
-const API_KEY = import.meta.env?.VITE_ANTHROPIC_API_KEY ?? '';
-const MODEL   = 'claude-sonnet-4-20250514';
+const API_KEY = import.meta.env?.VITE_GOOGLE_API_KEY ?? '';
+const MODEL   = 'gemini-2.0-flash';
 
 /* ─── Palette ────────────────────────────────────────────────────────────── */
 
@@ -535,21 +535,21 @@ export default function HalosPMOS() {
     setLoading(true);
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key':                            API_KEY,
-          'anthropic-version':                    '2023-06-01',
-          'content-type':                         'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model:      MODEL,
-          max_tokens: 1000,
-          system:     SYSTEM,
-          messages:   history,
-        }),
-      });
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM }] },
+            contents: history.map(m => ({
+              role:  m.role === 'assistant' ? 'model' : 'user',
+              parts: [{ text: m.content }],
+            })),
+            generationConfig: { maxOutputTokens: 1000 },
+          }),
+        }
+      );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -557,12 +557,12 @@ export default function HalosPMOS() {
       }
 
       const data  = await res.json();
-      const reply = data.content?.[0]?.text ?? '[No response received]';
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[No response received]';
       setMessages([...history, { role: 'assistant', content: reply }]);
     } catch (err) {
       setMessages([...history, {
         role:    'assistant',
-        content: `[SYSTEM ERROR] ${err.message}\n\nCheck that VITE_ANTHROPIC_API_KEY is set and valid.`,
+        content: `[SYSTEM ERROR] ${err.message}\n\nCheck that VITE_GOOGLE_API_KEY is set and valid.`,
       }]);
     } finally {
       setLoading(false);
