@@ -1,0 +1,42 @@
+{
+  "tabs": {
+    "MARKET INTEL": [
+      { "label": "DEMS Market",          "value": "$1.2–1.5B · 15.5% CAGR" },
+      { "label": "Axon Revenue",         "value": "$2.78B · ARR $1.35B" },
+      { "label": "Axon TAM Penetration", "value": "< 2% globally" },
+      { "label": "HALOS Advantage",      "value": "AI-native · Open ecosystem · EU-native" },
+      { "label": "Primary Threat",       "value": "Axon EU expansion + Cellebrite Gen AI (2025 Q1)" }
+    ],
+    "PM WORKFLOW": [
+      { "label": "Stage 0", "value": "Signal Capture · ≤2hr · locate pain in evidence chain" },
+      { "label": "Stage 1", "value": "Functional Demo · ≤1 day · prototype over PRD" },
+      { "label": "Stage 2", "value": "Decomposition · Context Chain · edge cases · AI thresholds" },
+      { "label": "Stage 3", "value": "Dual Spec · Inner Spec ≤40 lines · Compliance Annex" },
+      { "label": "Stage 4", "value": "Testing & Gates · pre-launch checklist" },
+      { "label": "Stage 5", "value": "Monitor & Iterate · adoption map · priority formula" }
+    ],
+    "MVP EVIDENCE": [
+      { "label": "Built in",     "value": "3 hours (v1.0) → 7 days (v8.1)" },
+      { "label": "Stack",        "value": "FastAPI · React/Vite · Whisper · GPT-4o · Gemini Flash" },
+      { "label": "Key Decision", "value": "Dual model parallelism — let stakeholders compare, not just trust" },
+      { "label": "Failure Mode", "value": "AI hallucination on body cam → fixed with Laplacian sharpness filter" },
+      { "label": "Scale Model",  "value": "Optical Flow (CPU) → Gemini Flash · $288 → $30 per 1000hr" }
+    ],
+    "HARD LINES": [
+      { "label": "01", "value": "Never ship anything that could compromise evidence integrity" },
+      { "label": "02", "value": "AI confidence always visible — never hidden from user" },
+      { "label": "03", "value": "Reporting wrong AI result ≤1 user action" },
+      { "label": "04", "value": "No slide decks. Prototypes talk." },
+      { "label": "05", "value": "Buffering = product failure" },
+      { "label": "06", "value": "Frame rate, latency, snappiness = product decisions" }
+    ]
+  },
+  "starters": [
+    "How would you prioritise the HALOS roadmap for next quarter?",
+    "Walk me through speccing a cross-video facial ID feature.",
+    "How do you decide when to use AI vs. a deterministic rule?",
+    "What's your approach to working with engineering on tight timelines?",
+    "How do you handle AI hallucination risk in law enforcement context?",
+    "What would you do in your first 30 days at HALOS?"
+  ]
+}

@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /* ─── Config ─────────────────────────────────────────────────────────────── */
 
-const API_KEY = import.meta.env?.VITE_OPENAI_API_KEY ?? '';
-const MODEL   = 'gpt-4o-mini';
+const API_KEY  = import.meta.env?.VITE_OPENAI_API_KEY ?? '';
+const MODEL    = 'gpt-4o-mini';
+const REPO_RAW = 'https://raw.githubusercontent.com/richardlee8433/halos-pm-os/master';
 
 /* ─── Palette ────────────────────────────────────────────────────────────── */
 
@@ -23,94 +24,54 @@ const C = {
   aiLabel:   '#FF6B2B',
 };
 
-/* ─── System Prompt ──────────────────────────────────────────────────────── */
-
-const SYSTEM = `You are Richard Lee's AI PM OS — an interactive representation of how Richard thinks and works as a Product Manager applying for a role at HALOS, a Video Forensics Platform for law enforcement and security.
-
-Richard's background:
-- B2B video infrastructure at KKStream (helping media companies build streaming platforms)
-- B2C consumer streaming at CATCHPLAY (serving millions of users across Asia)
-- Built a working Video Insight Assistant MVP in 3 hours after receiving the HALOS JD
-- Iterated to v8.1 in 7 days: dual model (GPT-4o + Gemini Flash), body cam adaptive mode, failure mode detection
-- AI-native PM: uses Claude Code and Gemini CLI as daily tools
-
-HALOS context:
-- Body cameras + cloud Video Forensics Platform for law enforcement and security
-- Competitors: Axon ($2.78B revenue, Evidence.com), Motorola Solutions, Cellebrite
-- Market: DEMS $1.2–1.5B growing at 15.5% CAGR, largely unsaturated (Axon <2% global TAM penetration)
-- HALOS differentiators: AI-native (not bolted-on), open ecosystem (any body cam brand), EU-native (GDPR advantage)
-- Key customers: law enforcement investigators, retail security (shoplifting cross-video facial ID)
-
-Richard's PM OS framework:
-- Stage 0: Signal Capture (≤2hr) — find real recurring user pain, locate in evidence chain
-- Stage 1: Functional Demo (≤1 day) — build prototype, show to users, capture reactions
-- Stage 2: Decomposition — Context Chain, edge cases, AI confidence thresholds
-- Stage 3: Dual Specification — Inner Spec (≤40 lines) + Compliance Annex
-- Stage 4: Testing & Gates — pre-launch checklist
-- Stage 5: Monitoring & Iteration — adoption stage map, priority formula
-
-Hard principles:
-- No slide decks. Prototypes talk.
-- No handoffs. Own from discovery to iteration.
-- Frame rate, latency, snappiness are product decisions, not engineering details.
-- Buffering = product failure.
-- AI confidence always visible. Never hidden.
-- Reporting wrong AI result requires ≤1 user action.
-- Never compromise evidence integrity.
-
-When answering:
-- Be concrete and specific. Reference real market data and real MVP decisions when relevant.
-- Be direct about trade-offs. Say what NOT to build, not just what to build.
-- If asked about working with engineers: emphasise Context Chain, acceptance criteria, and the failure mode → root cause → fix pattern.
-- Keep responses under 200 words unless the question genuinely requires depth.
-- Speak as the framework itself, in first person. Not "Richard says..." but "The first thing I'd do is..."
-- If asked something outside product/PM scope, redirect naturally: "That's outside my decision surface — but on the product side..."`;
-
-/* ─── Static Data ────────────────────────────────────────────────────────── */
+/* ─── Fallback Data (used if fetch fails) ────────────────────────────────── */
 
 const TABS = ['MARKET INTEL', 'PM WORKFLOW', 'MVP EVIDENCE', 'HARD LINES'];
 
-const TAB_DATA = {
-  'MARKET INTEL': [
-    { label: 'DEMS Market',         value: '$1.2–1.5B · 15.5% CAGR' },
-    { label: 'Axon Revenue',        value: '$2.78B · ARR $1.35B' },
-    { label: 'Axon TAM Penetration',value: '< 2% globally' },
-    { label: 'HALOS Advantage',     value: 'AI-native · Open ecosystem · EU-native' },
-    { label: 'Primary Threat',      value: 'Axon EU expansion + Cellebrite Gen AI (2025 Q1)' },
-  ],
-  'PM WORKFLOW': [
-    { label: 'Stage 0', value: 'Signal Capture · ≤2hr · locate pain in evidence chain' },
-    { label: 'Stage 1', value: 'Functional Demo · ≤1 day · prototype over PRD' },
-    { label: 'Stage 2', value: 'Decomposition · Context Chain · edge cases · AI thresholds' },
-    { label: 'Stage 3', value: 'Dual Spec · Inner Spec ≤40 lines · Compliance Annex' },
-    { label: 'Stage 4', value: 'Testing & Gates · pre-launch checklist' },
-    { label: 'Stage 5', value: 'Monitor & Iterate · adoption map · priority formula' },
-  ],
-  'MVP EVIDENCE': [
-    { label: 'Built in',      value: '3 hours (v1.0) → 7 days (v8.1)' },
-    { label: 'Stack',         value: 'FastAPI · React/Vite · Whisper · GPT-4o · Gemini Flash' },
-    { label: 'Key Decision',  value: 'Dual model parallelism — let stakeholders compare, not just trust' },
-    { label: 'Failure Mode',  value: 'AI hallucination on body cam → fixed with Laplacian sharpness filter' },
-    { label: 'Scale Model',   value: 'Optical Flow (CPU) → Gemini Flash · $288 → $30 per 1000hr' },
-  ],
-  'HARD LINES': [
-    { label: '01', value: 'Never ship anything that could compromise evidence integrity' },
-    { label: '02', value: 'AI confidence always visible — never hidden from user' },
-    { label: '03', value: 'Reporting wrong AI result ≤1 user action' },
-    { label: '04', value: 'No slide decks. Prototypes talk.' },
-    { label: '05', value: 'Buffering = product failure' },
-    { label: '06', value: 'Frame rate, latency, snappiness = product decisions' },
+const FALLBACK_CONFIG = {
+  tabs: {
+    'MARKET INTEL': [
+      { label: 'DEMS Market',          value: '$1.2–1.5B · 15.5% CAGR' },
+      { label: 'Axon Revenue',         value: '$2.78B · ARR $1.35B' },
+      { label: 'Axon TAM Penetration', value: '< 2% globally' },
+      { label: 'HALOS Advantage',      value: 'AI-native · Open ecosystem · EU-native' },
+      { label: 'Primary Threat',       value: 'Axon EU expansion + Cellebrite Gen AI (2025 Q1)' },
+    ],
+    'PM WORKFLOW': [
+      { label: 'Stage 0', value: 'Signal Capture · ≤2hr · locate pain in evidence chain' },
+      { label: 'Stage 1', value: 'Functional Demo · ≤1 day · prototype over PRD' },
+      { label: 'Stage 2', value: 'Decomposition · Context Chain · edge cases · AI thresholds' },
+      { label: 'Stage 3', value: 'Dual Spec · Inner Spec ≤40 lines · Compliance Annex' },
+      { label: 'Stage 4', value: 'Testing & Gates · pre-launch checklist' },
+      { label: 'Stage 5', value: 'Monitor & Iterate · adoption map · priority formula' },
+    ],
+    'MVP EVIDENCE': [
+      { label: 'Built in',     value: '3 hours (v1.0) → 7 days (v8.1)' },
+      { label: 'Stack',        value: 'FastAPI · React/Vite · Whisper · GPT-4o · Gemini Flash' },
+      { label: 'Key Decision', value: 'Dual model parallelism — let stakeholders compare, not just trust' },
+      { label: 'Failure Mode', value: 'AI hallucination on body cam → fixed with Laplacian sharpness filter' },
+      { label: 'Scale Model',  value: 'Optical Flow (CPU) → Gemini Flash · $288 → $30 per 1000hr' },
+    ],
+    'HARD LINES': [
+      { label: '01', value: 'Never ship anything that could compromise evidence integrity' },
+      { label: '02', value: 'AI confidence always visible — never hidden from user' },
+      { label: '03', value: 'Reporting wrong AI result ≤1 user action' },
+      { label: '04', value: 'No slide decks. Prototypes talk.' },
+      { label: '05', value: 'Buffering = product failure' },
+      { label: '06', value: 'Frame rate, latency, snappiness = product decisions' },
+    ],
+  },
+  starters: [
+    'How would you prioritise the HALOS roadmap for next quarter?',
+    'Walk me through speccing a cross-video facial ID feature.',
+    'How do you decide when to use AI vs. a deterministic rule?',
+    "What's your approach to working with engineering on tight timelines?",
+    'How do you handle AI hallucination risk in law enforcement context?',
+    'What would you do in your first 30 days at HALOS?',
   ],
 };
 
-const STARTERS = [
-  'How would you prioritise the HALOS roadmap for next quarter?',
-  'Walk me through speccing a cross-video facial ID feature.',
-  'How do you decide when to use AI vs. a deterministic rule?',
-  "What's your approach to working with engineering on tight timelines?",
-  'How do you handle AI hallucination risk in law enforcement context?',
-  'What would you do in your first 30 days at HALOS?',
-];
+const FALLBACK_SYSTEM = `You are Richard Lee's AI PM OS — an interactive representation of how Richard thinks and works as a Product Manager at HALOS, a Video Forensics Platform for law enforcement and security.`;
 
 /* ─── Global CSS (injected once) ─────────────────────────────────────────── */
 
@@ -503,6 +464,8 @@ export default function HalosPMOS() {
   const [input, setInput]           = useState('');
   const [loading, setLoading]       = useState(false);
   const [booted, setBooted]         = useState(false);
+  const [config, setConfig]         = useState(FALLBACK_CONFIG);
+  const [system, setSystem]         = useState(FALLBACK_SYSTEM);
   const messagesEndRef               = useRef(null);
   const textareaRef                  = useRef(null);
 
@@ -512,6 +475,17 @@ export default function HalosPMOS() {
     el.textContent = GLOBAL_CSS;
     document.head.appendChild(el);
     return () => document.head.removeChild(el);
+  }, []);
+
+  // Fetch live data from GitHub, fall back silently on error
+  useEffect(() => {
+    Promise.all([
+      fetch(`${REPO_RAW}/data/config.json`).then(r => r.json()),
+      fetch(`${REPO_RAW}/data/system-prompt.txt`).then(r => r.text()),
+    ]).then(([cfg, sys]) => {
+      setConfig(cfg);
+      setSystem(sys.trim());
+    }).catch(() => { /* keep fallbacks */ });
   }, []);
 
   // Boot animation trigger
@@ -545,7 +519,7 @@ export default function HalosPMOS() {
           model:      MODEL,
           max_tokens: 1000,
           messages:   [
-            { role: 'system', content: SYSTEM },
+            { role: 'system', content: system },
             ...history,
           ],
         }),
@@ -633,7 +607,7 @@ export default function HalosPMOS() {
 
           {/* Tab rows */}
           <div style={S.tabContent}>
-            {TAB_DATA[TABS[activeTab]].map((row, i) => (
+            {(config.tabs[TABS[activeTab]] ?? []).map((row, i) => (
               <div key={`${activeTab}-${i}`} style={S.row(booted, i)}>
                 <span style={S.rowLabel}>{row.label}</span>
                 <span style={S.rowValue}>{row.value}</span>
@@ -678,7 +652,7 @@ export default function HalosPMOS() {
                 <div style={S.emptyTitle}>SYSTEM READY</div>
                 <div style={S.emptySubtitle}>Select a question or type your own</div>
                 <div style={S.startersGrid}>
-                  {STARTERS.map((q, i) => (
+                  {(config.starters ?? []).map((q, i) => (
                     <button
                       key={i}
                       className="starter-btn"
