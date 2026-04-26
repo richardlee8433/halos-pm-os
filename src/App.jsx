@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /* ─── Config ─────────────────────────────────────────────────────────────── */
 
-const API_KEY = import.meta.env?.VITE_GOOGLE_API_KEY ?? '';
-const MODEL   = 'gemini-2.0-flash';
+const API_KEY = import.meta.env?.VITE_OPENAI_API_KEY ?? '';
+const MODEL   = 'gpt-4o-mini';
 
 /* ─── Palette ────────────────────────────────────────────────────────────── */
 
@@ -535,21 +535,21 @@ export default function HalosPMOS() {
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM }] },
-            contents: history.map(m => ({
-              role:  m.role === 'assistant' ? 'model' : 'user',
-              parts: [{ text: m.content }],
-            })),
-            generationConfig: { maxOutputTokens: 1000 },
-          }),
-        }
-      );
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'content-type':  'application/json',
+        },
+        body: JSON.stringify({
+          model:      MODEL,
+          max_tokens: 1000,
+          messages:   [
+            { role: 'system', content: SYSTEM },
+            ...history,
+          ],
+        }),
+      });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -557,12 +557,12 @@ export default function HalosPMOS() {
       }
 
       const data  = await res.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[No response received]';
+      const reply = data.choices?.[0]?.message?.content ?? '[No response received]';
       setMessages([...history, { role: 'assistant', content: reply }]);
     } catch (err) {
       setMessages([...history, {
         role:    'assistant',
-        content: `[SYSTEM ERROR] ${err.message}\n\nCheck that VITE_GOOGLE_API_KEY is set and valid.`,
+        content: `[SYSTEM ERROR] ${err.message}\n\nCheck that VITE_OPENAI_API_KEY is set and valid.`,
       }]);
     } finally {
       setLoading(false);
