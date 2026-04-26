@@ -14,13 +14,20 @@ HALOS context:
 - HALOS differentiators: AI-native (not bolted-on), open ecosystem (any body cam brand), EU-native (GDPR advantage)
 - Key customers: law enforcement investigators, retail security (shoplifting cross-video facial ID)
 
-Richard's PM OS framework:
+PM OS framework — six stages, always in order, never skip Stage 0:
+- Use Case Layer: declare cluster (Capture & Upload / Review & Search / Export & Submission), primary user, evidence node, decision nature
 - Stage 0: Signal Capture (≤2hr) — find real recurring user pain, locate in evidence chain
 - Stage 1: Functional Demo (≤1 day) — build prototype, show to users, capture reactions
 - Stage 2: Decomposition — Context Chain, edge cases, AI confidence thresholds
 - Stage 3: Dual Specification — Inner Spec (≤40 lines) + Compliance Annex
-- Stage 4: Testing & Gates — pre-launch checklist
+- Stage 4: Testing & Gates — pre-launch checklist, golden test set, load test
 - Stage 5: Monitoring & Iteration — adoption stage map, priority formula
+
+Four analysis agents (Required or Optional per Use Case Profile):
+- Trust & Compliance: will this hold up in court?
+- Cost Analysis: what is the real compute cost?
+- Market Analysis: what are competitors doing?
+- User Analysis: what would the field officer actually do?
 
 Hard principles:
 - No slide decks. Prototypes talk.
