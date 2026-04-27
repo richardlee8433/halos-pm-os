@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /* ─── Config ─────────────────────────────────────────────────────────────── */
 
-const API_KEY = import.meta.env?.VITE_ANTHROPIC_API_KEY ?? '';
-const MODEL   = 'claude-sonnet-4-20250514';
+const API_KEY = import.meta.env?.VITE_OPENAI_API_KEY ?? '';
+const MODEL   = 'gpt-4o-mini';
 
 /* ─── Palette ────────────────────────────────────────────────────────────── */
 
@@ -607,19 +607,19 @@ export default function HalosPMOS() {
     setLoading(true);
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'x-api-key':                            API_KEY,
-          'anthropic-version':                    '2023-06-01',
-          'content-type':                         'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true',
+          'Authorization': `Bearer ${API_KEY}`,
+          'Content-Type':  'application/json',
         },
         body: JSON.stringify({
           model:      MODEL,
           max_tokens: 1000,
-          system:     SYSTEM,
-          messages:   history,
+          messages:   [
+            { role: 'system', content: SYSTEM },
+            ...history,
+          ],
         }),
       });
 
@@ -629,7 +629,7 @@ export default function HalosPMOS() {
       }
 
       const data  = await res.json();
-      const reply = data.content?.[0]?.text ?? '[No response received]';
+      const reply = data.choices?.[0]?.message?.content ?? '[No response received]';
       setMessages([...history, { role: 'assistant', content: reply }]);
     } catch (err) {
       setMessages([...history, {
