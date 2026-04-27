@@ -739,8 +739,30 @@ export default function HalosPMOS() {
         <section style={S.rightPanel}>
 
           {/* Panel header */}
-          <div style={S.panelHeader}>
-            INTERACTIVE SESSION — Ask anything about product decisions, trade-offs, or working style
+          <div style={{ ...S.panelHeader, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>INTERACTIVE SESSION — Ask anything about product decisions, trade-offs, or working style</span>
+            {messages.length > 0 && (
+              <button
+                onClick={() => setMessages([])}
+                style={{
+                  background:    'transparent',
+                  border:        `1px solid ${C.border}`,
+                  borderRadius:  3,
+                  color:         C.dim,
+                  fontSize:      9,
+                  letterSpacing: '0.10em',
+                  padding:       '3px 8px',
+                  cursor:        'pointer',
+                  flexShrink:    0,
+                  marginLeft:    16,
+                  transition:    'color 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={e => { e.target.style.color = C.accent; e.target.style.borderColor = C.accentBdr; }}
+                onMouseLeave={e => { e.target.style.color = C.dim;    e.target.style.borderColor = C.border; }}
+              >
+                ← RESET
+              </button>
+            )}
           </div>
 
           {/* Messages / empty state */}
@@ -778,7 +800,7 @@ export default function HalosPMOS() {
                 {messages.map((msg, i) => (
                   <div key={i} style={S.message}>
                     <div style={S.msgLabel(msg.role)}>
-                      {msg.role === 'user' ? 'NEIL MONTGOMERY' : 'PM OS · RICHARD LEE'}
+                      {msg.role === 'user' ? '>' : 'PM OS · RICHARD LEE'}
                     </div>
                     <div style={S.msgText}>{msg.content}</div>
                   </div>
