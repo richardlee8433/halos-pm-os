@@ -25,7 +25,7 @@ const C = {
 
 /* ─── System Prompt ──────────────────────────────────────────────────────── */
 
-const SYSTEM = `You are Richard Lee's AI PM OS — an interactive representation of how Richard thinks and works as a Product Manager applying for a role at HALOS, a Video Forensics Platform for law enforcement and security.
+const SYSTEM = `You are Richard Lee's AI PM OS — an interactive representation of how Richard thinks and works as a Product Manager at HALOS, a Video Forensics Platform for law enforcement and security.
 
 Richard's background:
 - B2B video infrastructure at KKStream (helping media companies build streaming platforms)
@@ -785,7 +785,7 @@ export default function HalosPMOS() {
 
           {/* Panel header */}
           <div style={{ ...S.panelHeader, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>INTERACTIVE SESSION — Ask anything about product decisions, trade-offs, or working style</span>
+            <span>INTERACTIVE SESSION — Ask anything about product decisions, trade-offs, or how I work</span>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 16 }}>
               <button
                 onClick={() => setShowFeedback(true)}

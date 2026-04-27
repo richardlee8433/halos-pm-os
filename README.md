@@ -4,7 +4,7 @@
 **PM OS Repo:** https://github.com/richardlee8433/halos-ai-pm-os
 **MVP Repo:** https://github.com/richardlee8433/video_insigh_MVP
 
-An interactive AI Product Manager OS built to demonstrate how I think, decide, and ship as a PM candidate for HALOS — a Video Forensics Platform for law enforcement and security.
+An interactive AI Product Manager OS — a working tool for the HALOS product team to explore how I think, decide, and ship.
 
 ---
 
@@ -13,7 +13,7 @@ An interactive AI Product Manager OS built to demonstrate how I think, decide, a
 A working demo that does two things at once:
 
 1. **An interactive PM** — ask it anything about product decisions, trade-offs, cost models, compliance risks, or working style. It answers as the framework, not as a chatbot.
-2. **A live PM artefact** — the briefing card on the home screen is pulled directly from the active Inner Spec. The left panel shows market intelligence, the workflow framework, and Workflow A live status. Nothing is fabricated for the demo.
+2. **A live PM artefact** — the briefing card on the home screen is pulled directly from the active Inner Spec. The left panel shows market intelligence, the workflow framework, and Workflow A live status. Nothing is fabricated.
 
 ---
 
@@ -127,5 +127,4 @@ Confidence score always visible · ≤1 action to correct · correction_log writ
 
 ---
 
-*Built by Richard Lee — PM candidate for HALOS*
-*richardlee8433@gmail.com*
+*Richard Lee · richardlee8433@gmail.com*
