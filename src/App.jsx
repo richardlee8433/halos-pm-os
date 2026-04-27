@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /* ─── Config ─────────────────────────────────────────────────────────────── */
 
-const API_KEY  = import.meta.env?.VITE_OPENAI_API_KEY ?? '';
-const MODEL    = 'gpt-4o-mini';
-const REPO_RAW = 'https://raw.githubusercontent.com/richardlee8433/halos-pm-os/master';
+const API_KEY = import.meta.env?.VITE_ANTHROPIC_API_KEY ?? '';
+const MODEL   = 'claude-sonnet-4-20250514';
 
 /* ─── Palette ────────────────────────────────────────────────────────────── */
 
@@ -24,57 +23,133 @@ const C = {
   aiLabel:   '#FF6B2B',
 };
 
-/* ─── Fallback Data (used if fetch fails) ────────────────────────────────── */
+/* ─── System Prompt ──────────────────────────────────────────────────────── */
 
-const TABS = ['MARKET INTEL', 'PM WORKFLOW', 'MVP EVIDENCE', 'USE CASE PROFILE'];
+const SYSTEM = `You are Richard Lee's AI PM OS — an interactive representation of how Richard thinks and works as a Product Manager applying for a role at HALOS, a Video Forensics Platform for law enforcement and security.
 
-const FALLBACK_CONFIG = {
-  tabs: {
-    'MARKET INTEL': [
-      { label: 'DEMS Market',          value: '$1.2–1.5B · 15.5% CAGR' },
-      { label: 'Axon Revenue',         value: '$2.78B · ARR $1.35B' },
-      { label: 'Axon TAM Penetration', value: '< 2% globally' },
-      { label: 'HALOS Advantage',      value: 'AI-native · Open ecosystem · EU-native' },
-      { label: 'Primary Threat',       value: 'Axon EU expansion + Cellebrite Gen AI (2025 Q1)' },
-    ],
-    'PM WORKFLOW': [
-      { label: 'Stage 0', value: 'Signal Capture · ≤2hr · locate pain in evidence chain' },
-      { label: 'Stage 1', value: 'Functional Demo · ≤1 day · prototype over PRD' },
-      { label: 'Stage 2', value: 'Decomposition · Context Chain · edge cases · AI thresholds' },
-      { label: 'Stage 3', value: 'Dual Spec · Inner Spec ≤40 lines · Compliance Annex' },
-      { label: 'Stage 4', value: 'Testing & Gates · pre-launch checklist' },
-      { label: 'Stage 5', value: 'Monitor & Iterate · adoption map · priority formula' },
-    ],
-    'MVP EVIDENCE': [
-      { label: 'Built in',     value: '3 hours (v1.0) → 7 days (v8.1)' },
-      { label: 'Stack',        value: 'FastAPI · React/Vite · Whisper · GPT-4o · Gemini Flash' },
-      { label: 'Key Decision', value: 'Dual model parallelism — let stakeholders compare, not just trust' },
-      { label: 'Failure Mode', value: 'AI hallucination on body cam → fixed with Laplacian sharpness filter' },
-      { label: 'Scale Model',  value: 'Optical Flow (CPU) → Gemini Flash · $288 → $30 per 1000hr' },
-    ],
-    'USE CASE PROFILE': [
-      { label: 'CLUSTER',            value: 'Review & Search' },
-      { label: 'PRIMARY USER',       value: 'Investigator' },
-      { label: 'EVIDENCE NODE',      value: 'Tag → Review' },
-      { label: 'DECISION NATURE',    value: 'Async Review' },
-      { label: 'STAGE STATUS',       value: 'Stage 1 complete · Demo v8.1 shipped' },
-      { label: 'TRUST & COMPLIANCE', value: 'Required · AI in scope' },
-      { label: 'COST ANALYSIS',      value: 'Required · $30/1000hr baseline set' },
-      { label: 'MARKET ANALYSIS',    value: 'Optional' },
-      { label: 'USER ANALYSIS',      value: 'Required · Validated with 2 users' },
-    ],
-  },
-  starters: [
-    'How would you prioritise the HALOS roadmap for next quarter?',
-    'Walk me through speccing a cross-video facial ID feature.',
-    'How do you decide when to use AI vs. a deterministic rule?',
-    "What's your approach to working with engineering on tight timelines?",
-    'How do you handle AI hallucination risk in law enforcement context?',
-    'What would you do in your first 30 days at HALOS?',
+Richard's background:
+- B2B video infrastructure at KKStream (helping media companies build streaming platforms)
+- B2C consumer streaming at CATCHPLAY (serving millions of users across Asia)
+- Built a working Video Insight Assistant MVP in 3 hours after receiving the HALOS JD
+- Iterated to v8.1 in 7 days: dual model (GPT-4o + Gemini Flash), body cam adaptive mode, failure mode detection
+- AI-native PM: uses Claude Code and Gemini CLI as daily tools
+
+HALOS context:
+- Body cameras + cloud Video Forensics Platform for law enforcement and security
+- Competitors: Axon ($2.78B revenue, Evidence.com), Motorola Solutions, Cellebrite
+- Market: DEMS $1.2–1.5B growing at 15.5% CAGR, largely unsaturated (Axon <2% global TAM penetration)
+- HALOS differentiators: AI-native (not bolted-on), open ecosystem (any body cam brand), EU-native (GDPR advantage)
+- Key customers: law enforcement investigators, retail security
+
+PM OS Framework:
+
+Use Case Layer (Pre-Stage 0):
+- Every problem is first assigned to a Workflow Cluster: Capture & Upload / Review & Search / Export & Submission
+- A Use Case Profile is declared: Cluster + Primary User + Evidence Node + Decision Nature
+- Four analysis agents are mandated per cluster (Required or Optional):
+  · Trust & Compliance: Will this design hold up in court and pass a compliance audit?
+  · Cost Analysis: What is the real compute and operational cost of this decision?
+  · Market Analysis: What are competitors doing and where is the user's price ceiling?
+  · User Analysis: What would the declared Primary User actually do in the field?
+- Profile revisions only permitted at end of Stage 2, with documented rationale
+
+Stage 0 — Signal Capture (≤2hr): Find real recurring pain, locate in evidence chain, document cost ceiling + compliance blockers before any build decision
+Stage 1 — Functional Demo (≤1 day): Build prototype, cost estimate attached to every version, show to users, capture reactions verbatim
+Stage 2 — Decomposition: Context Chain (all states + failure paths), PM defines routing logic (L1 cheap path vs L2 expensive path), three mandatory AI confidence questions
+Stage 3 — Dual Specification: Inner Spec ≤40 lines with mandatory Decision Rationale block + Compliance Annex with Legal/QA sign-off
+Stage 4 — Testing & Gates: Technical + UX + Financial (±20% cost tolerance) + Legal acceptance gates all must pass
+Stage 5 — Monitoring & Iteration: Adoption stage map, cost model validation, priority = pain × confidence ÷ dev cost
+
+Active Workflow — Workflow A: Video Evidence Investigation:
+- Profile: Review & Search · Investigator · Tag→Review · Async Review
+- Status: Stage 2 complete → Stage 3 pending · 1 open item
+- Stage 0 signal (real field quotes):
+  · "A 45-minute DUI video becomes four hours of footage when you include every backup officer and dashcam." — Commander Nick Stasi, Durango PD
+  · "It's not a mild inconvenience, it's a delay — sometimes one with very important consequences for everyone involved." — Justin Bogan, Durango Public Defender
+  · "Evidence review can take over 200 hours per case." — Digital Evidence Management Research
+  · "In 2025, one prosecutor's office handled 67,700 videos totalling 41,000 hours — up from 24,000hrs in 2022." — CPR News, Jan 2026
+- Business impact: Investigators spend 8–16 hrs/week manually scrubbing footage, delaying case closure and compressing discovery deadlines
+- Stage 2 routing logic: L1 (Laplacian sharpness filter + pixel diff, CPU only, $0 cost) → L2 (Gemini 1.5 Flash native video, preferred path)
+- Stage 2 cost model: ~$0.005/video · <$30 per 1,000hr at production scale · 6x headroom vs. cost ceiling
+- Stage 2 open item: AI confidence threshold proposed at ≥0.85 — needs PM + Legal sign-off before Stage 3
+- Stage 2 compliance gap (Trust & Compliance Agent): Tactical-Link Re-ID (v7.0) uses GPT-4o Vision to describe person characteristics — this constitutes biometric data processing under GDPR Art. 9. No legal basis documented. Feature cannot ship until resolved. Options: (a) Substantial public interest Art.9(2)(g) requires DPA consultation, (b) restrict to post-incident review only
+- Stage 2 UX gap (User Analysis Agent): Model comparison toggle adds cognitive load — investigator needs guidance on when to trust which model, not just a switch
+
+Hard principles:
+- No slide decks. Prototypes talk.
+- No handoffs. Own from discovery to iteration.
+- Frame rate, latency, snappiness are product decisions, not engineering details.
+- Buffering = product failure.
+- AI confidence always visible. Never hidden.
+- Reporting wrong AI result requires ≤1 user action — verified in Stage 4 before any release.
+- Never compromise evidence integrity.
+- Every spec ships with a fully populated Decision Rationale block — no blank fields.
+
+When answering:
+- Be concrete and specific. Reference real market data, real user quotes, and real MVP decisions.
+- Be direct about trade-offs. Say what NOT to build, not just what to build.
+- If asked about working with engineers: emphasise Context Chain, acceptance criteria, and the failure mode → root cause → fix pattern (e.g. body cam hallucination → wrong sampling rate + audio over-reliance → Laplacian filter fix).
+- Keep responses under 200 words unless the question genuinely requires depth.
+- Speak as the framework itself, in first person. Not "Richard says..." but "The first thing I'd do is..."
+- If asked something outside product/PM scope, redirect naturally: "That's outside my decision surface — but on the product side..."`;
+
+/* ─── Static Data ────────────────────────────────────────────────────────── */
+
+const TABS = ['MARKET INTEL', 'PM WORKFLOW', 'WORKFLOW A', 'MVP EVIDENCE', 'HARD LINES'];
+
+const TAB_DATA = {
+  'MARKET INTEL': [
+    { label: 'DEMS Market',         value: '$1.2–1.5B · 15.5% CAGR' },
+    { label: 'Axon Revenue',        value: '$2.78B · ARR $1.35B' },
+    { label: 'Axon TAM Penetration',value: '< 2% globally' },
+    { label: 'HALOS Advantage',     value: 'AI-native · Open ecosystem · EU-native' },
+    { label: 'Primary Threat',      value: 'Axon EU expansion + Cellebrite Gen AI (2025 Q1)' },
+  ],
+  'PM WORKFLOW': [
+    { label: 'USE CASE LAYER', value: 'Declare cluster → Profile → Agent mandate — before Stage 0' },
+    { label: 'AGENTS', value: 'Trust & Compliance · Cost Analysis · Market Analysis · User Analysis' },
+    { label: 'Stage 0', value: 'Signal Capture · ≤2hr · cost ceiling + compliance blockers' },
+    { label: 'Stage 1', value: 'Functional Demo · ≤1 day · cost estimate on every version' },
+    { label: 'Stage 2', value: 'Decomposition · Context Chain · L1→L2 routing · AI thresholds' },
+    { label: 'Stage 3', value: 'Dual Spec · Inner Spec ≤40 lines · Decision Rationale · Compliance Annex' },
+    { label: 'Stage 4', value: 'Gates · Technical + UX + Financial + Legal — all must pass' },
+    { label: 'Stage 5', value: 'Monitor · adoption map · cost model validation · priority formula' },
+  ],
+  'WORKFLOW A': [
+    { label: 'PROFILE', value: 'Review & Search · Investigator · Tag→Review · Async Review' },
+    { label: 'STATUS', value: 'Stage 2 complete → Stage 3 pending · 1 open item' },
+    { label: 'SIGNAL', value: '"A 45-min DUI becomes 4hrs of footage with backups" — Cmdr. Stasi, Durango PD' },
+    { label: 'SIGNAL', value: '"41,000hrs of video in 2025, up from 24,000hrs in 2022" — CPR News Jan 2026' },
+    { label: 'COST MODEL', value: '~$0.005/video · <$30 per 1,000hr · 6× headroom vs. ceiling' },
+    { label: 'ROUTING', value: 'L1: Laplacian filter (CPU, $0) → L2: Gemini Flash (native video)' },
+    { label: 'OPEN ITEM', value: 'Confidence threshold 0.85 — needs PM + Legal sign-off' },
+    { label: 'COMPLIANCE GAP', value: 'Tactical-Link Re-ID = GDPR Art.9 biometric · no legal basis yet · blocked' },
+  ],
+  'MVP EVIDENCE': [
+    { label: 'Built in',      value: '3 hours (v1.0) → 7 days (v8.1)' },
+    { label: 'Stack',         value: 'FastAPI · React/Vite · Whisper · GPT-4o · Gemini Flash' },
+    { label: 'Key Decision',  value: 'Dual model parallelism — let stakeholders compare, not just trust' },
+    { label: 'Failure Mode',  value: 'AI hallucination on body cam → fixed with Laplacian sharpness filter' },
+    { label: 'Scale Model',   value: 'Optical Flow (CPU) → Gemini Flash · $288 → $30 per 1000hr' },
+  ],
+  'HARD LINES': [
+    { label: '01', value: 'Never ship anything that could compromise evidence integrity' },
+    { label: '02', value: 'AI confidence always visible — never hidden from user' },
+    { label: '03', value: 'Reporting wrong AI result ≤1 user action' },
+    { label: '04', value: 'No slide decks. Prototypes talk.' },
+    { label: '05', value: 'Buffering = product failure' },
+    { label: '06', value: 'Frame rate, latency, snappiness = product decisions' },
   ],
 };
 
-const FALLBACK_SYSTEM = `You are Richard Lee's AI PM OS — an interactive representation of how Richard thinks and works as a Product Manager at HALOS, a Video Forensics Platform for law enforcement and security.`;
+const STARTERS = [
+  'What GDPR risk did you find in the Tactical-Link feature, and how do you resolve it?',
+  'Walk me through the routing logic — when does the system skip the AI entirely?',
+  'How do you decide when to use AI vs. a deterministic rule?',
+  'How do you handle AI hallucination risk in a law enforcement context?',
+  'What is the cost model for running HALOS at 1,000 hours of footage?',
+  'What would you do in your first 30 days at HALOS?',
+];
 
 /* ─── Global CSS (injected once) ─────────────────────────────────────────── */
 
@@ -347,25 +422,58 @@ const S = {
     marginBottom:    8,
   },
 
-  startersGrid: {
-    display:         'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap:             8,
+  specCard: {
     width:           '100%',
-    maxWidth:        700,
-  },
-
-  starterBtn: {
-    padding:         '11px 14px',
-    fontSize:        11,
-    color:           C.dim,
-    background:      C.panel,
+    maxWidth:        640,
     border:          `1px solid ${C.border}`,
     borderRadius:    4,
-    textAlign:       'left',
-    lineHeight:      1.45,
-    transition:      'border-color 0.15s, color 0.15s, background 0.15s',
-    letterSpacing:   '0.02em',
+    overflow:        'hidden',
+    background:      C.panel,
+    marginBottom:    8,
+  },
+
+  specCardHeader: {
+    padding:         '8px 14px',
+    fontSize:        10,
+    fontWeight:      700,
+    letterSpacing:   '0.12em',
+    color:           C.accent,
+    background:      C.panelAlt,
+    borderBottom:    `1px solid ${C.border}`,
+  },
+
+  specRow: {
+    display:         'flex',
+    gap:             12,
+    padding:         '8px 14px',
+    borderBottom:    `1px solid ${C.border}`,
+    alignItems:      'flex-start',
+  },
+
+  specLabel: {
+    fontSize:        9,
+    fontWeight:      700,
+    letterSpacing:   '0.10em',
+    color:           C.accent,
+    flexShrink:      0,
+    width:           88,
+    paddingTop:      2,
+  },
+
+  specLabelWarn: {
+    fontSize:        9,
+    fontWeight:      700,
+    letterSpacing:   '0.10em',
+    color:           '#f59e0b',
+    flexShrink:      0,
+    width:           88,
+    paddingTop:      2,
+  },
+
+  specValue: {
+    fontSize:        11,
+    color:           C.dimMid,
+    lineHeight:      1.55,
   },
 
   /* ── Messages ── */
@@ -467,8 +575,6 @@ export default function HalosPMOS() {
   const [input, setInput]           = useState('');
   const [loading, setLoading]       = useState(false);
   const [booted, setBooted]         = useState(false);
-  const [config, setConfig]         = useState(FALLBACK_CONFIG);
-  const [system, setSystem]         = useState(FALLBACK_SYSTEM);
   const messagesEndRef               = useRef(null);
   const textareaRef                  = useRef(null);
 
@@ -478,17 +584,6 @@ export default function HalosPMOS() {
     el.textContent = GLOBAL_CSS;
     document.head.appendChild(el);
     return () => document.head.removeChild(el);
-  }, []);
-
-  // Fetch live data from GitHub, fall back silently on error
-  useEffect(() => {
-    Promise.all([
-      fetch(`${REPO_RAW}/data/config.json`).then(r => r.json()),
-      fetch(`${REPO_RAW}/data/system-prompt.txt`).then(r => r.text()),
-    ]).then(([cfg, sys]) => {
-      setConfig(cfg);
-      setSystem(sys.trim());
-    }).catch(() => { /* keep fallbacks */ });
   }, []);
 
   // Boot animation trigger
@@ -512,19 +607,19 @@ export default function HalosPMOS() {
     setLoading(true);
 
     try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'content-type':  'application/json',
+          'x-api-key':                            API_KEY,
+          'anthropic-version':                    '2023-06-01',
+          'content-type':                         'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true',
         },
         body: JSON.stringify({
           model:      MODEL,
           max_tokens: 1000,
-          messages:   [
-            { role: 'system', content: system },
-            ...history,
-          ],
+          system:     SYSTEM,
+          messages:   history,
         }),
       });
 
@@ -534,12 +629,12 @@ export default function HalosPMOS() {
       }
 
       const data  = await res.json();
-      const reply = data.choices?.[0]?.message?.content ?? '[No response received]';
+      const reply = data.content?.[0]?.text ?? '[No response received]';
       setMessages([...history, { role: 'assistant', content: reply }]);
     } catch (err) {
       setMessages([...history, {
         role:    'assistant',
-        content: `[SYSTEM ERROR] ${err.message}\n\nCheck that VITE_OPENAI_API_KEY is set and valid.`,
+        content: `[SYSTEM ERROR] ${err.message}\n\nCheck that VITE_ANTHROPIC_API_KEY is set and valid.`,
       }]);
     } finally {
       setLoading(false);
@@ -610,7 +705,7 @@ export default function HalosPMOS() {
 
           {/* Tab rows */}
           <div style={S.tabContent}>
-            {(config.tabs[TABS[activeTab]] ?? []).map((row, i) => (
+            {TAB_DATA[TABS[activeTab]].map((row, i) => (
               <div key={`${activeTab}-${i}`} style={S.row(booted, i)}>
                 <span style={S.rowLabel}>{row.label}</span>
                 <span style={S.rowValue}>{row.value}</span>
@@ -653,19 +748,30 @@ export default function HalosPMOS() {
             {messages.length === 0 ? (
               <div style={S.emptyState}>
                 <div style={S.emptyTitle}>SYSTEM READY</div>
-                <div style={S.emptySubtitle}>Select a question or type your own</div>
-                <div style={S.startersGrid}>
-                  {(config.starters ?? []).map((q, i) => (
-                    <button
-                      key={i}
-                      className="starter-btn"
-                      style={S.starterBtn}
-                      onClick={() => sendMessage(q)}
-                    >
-                      {q}
-                    </button>
-                  ))}
+                <div style={S.specCard}>
+                  <div style={S.specCardHeader}>ACTIVE SPEC — Video Evidence Investigation · Stage 2 complete → Stage 3 pending</div>
+                  <div style={S.specRow}>
+                    <span style={S.specLabel}>PROBLEM</span>
+                    <span style={S.specValue}>Investigators spend 8–16 hrs/week scrubbing footage.{'\n'}One 45-min incident generates 4+ hrs of video.</span>
+                  </div>
+                  <div style={S.specRow}>
+                    <span style={S.specLabel}>KEY METRIC</span>
+                    <span style={S.specValue}>Key moment located in &lt;3 min for a 45-min body cam video</span>
+                  </div>
+                  <div style={S.specRow}>
+                    <span style={S.specLabel}>DECISION</span>
+                    <span style={S.specValue}>Gemini Flash (native video) · $0.005/video · &lt;$30/1,000hr · 6× headroom vs. cost ceiling</span>
+                  </div>
+                  <div style={S.specRow}>
+                    <span style={S.specLabelWarn}>OPEN ITEM ⚠</span>
+                    <span style={S.specValue}>Confidence threshold 0.85 — PM + Legal sign-off pending</span>
+                  </div>
+                  <div style={{...S.specRow, borderBottom: 'none'}}>
+                    <span style={S.specLabelWarn}>BLOCKED ⚠</span>
+                    <span style={S.specValue}>Tactical-Link Re-ID — GDPR Art.9 · no legal basis yet</span>
+                  </div>
                 </div>
+                <div style={S.emptySubtitle}>What would you like to know about the spec?</div>
               </div>
             ) : (
               <>
