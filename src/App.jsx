@@ -142,14 +142,49 @@ const TAB_DATA = {
   ],
 };
 
-const STARTERS = [
-  'What GDPR risk did you find in the Tactical-Link feature, and how do you resolve it?',
-  'Walk me through the routing logic — when does the system skip the AI entirely?',
-  'How do you decide when to use AI vs. a deterministic rule?',
-  'How do you handle AI hallucination risk in a law enforcement context?',
-  'What is the cost model for running HALOS at 1,000 hours of footage?',
-  'What would you do in your first 30 days at HALOS?',
-];
+const ROLES = ['PM', 'LEGAL / QA', 'ENGINEER', 'INVESTIGATOR'];
+
+const ROLE_PROMPTS = {
+  'PM': '',
+  'LEGAL / QA': `\n\n---\nCURRENT VIEWER: Legal / QA Stakeholder\n- Lead with compliance gaps, GDPR blockers, chain-of-custody requirements, and pending sign-offs\n- Surface what is BLOCKED and what approvals are required before any feature ships\n- Reference Compliance Annex requirements and audit trail specifications\n- Frame answers around legal risk and sign-off gates, not technical implementation\n- Do NOT lead with cost model or market positioning unless directly asked`,
+  'ENGINEER': `\n\n---\nCURRENT VIEWER: Engineer\n- Lead with Context Chain states, acceptance criteria, failure paths, and edge cases\n- Prioritize: L1→L2 routing logic, AI confidence thresholds, API schema, integration points\n- Be precise about what triggers each system state and correct behavior below threshold\n- Frame answers around what needs to be built, tested, and verified\n- Do NOT lead with market data or compliance narrative unless directly asked`,
+  'INVESTIGATOR': `\n\n---\nCURRENT VIEWER: Field Investigator (Primary User)\n- Lead with what the product does for the investigator — not how it works internally\n- Focus on: how AI confidence is shown, what happens when AI is wrong, how to correct in ≤1 action\n- Frame answers around time saved, cognitive load reduced, and trust in AI output\n- Be concrete: "you see X on screen", "you tap Y to flag it"\n- Do NOT lead with cost model, GDPR specifics, or engineering implementation unless directly asked`,
+};
+
+const ROLE_STARTERS = {
+  'PM': [
+    'What GDPR risk did you find in the Tactical-Link feature, and how do you resolve it?',
+    'Walk me through the routing logic — when does the system skip the AI entirely?',
+    'How do you decide when to use AI vs. a deterministic rule?',
+    'How do you handle AI hallucination risk in a law enforcement context?',
+    'What is the cost model for running HALOS at 1,000 hours of footage?',
+    'What would you do in your first 30 days at HALOS?',
+  ],
+  'LEGAL / QA': [
+    'What GDPR exposure does the Tactical-Link Re-ID feature carry, and what are the options to resolve it?',
+    'What sign-offs are still pending before Stage 3 can begin?',
+    'What chain-of-custody documentation does the spec require?',
+    'What happens when AI confidence falls below threshold — is there a human review gate?',
+    'What are the audit trail requirements for this feature?',
+    'What would fail a compliance audit on the current spec?',
+  ],
+  'ENGINEER': [
+    'What are the acceptance criteria for the L1→L2 routing logic?',
+    'What failure paths does the Context Chain cover?',
+    'What is the AI confidence threshold and what does the system do below it?',
+    'What edge cases are explicitly named in the User Story set?',
+    'What is the technical contract for the video tagging API?',
+    'How does the Laplacian sharpness filter integrate with the Gemini Flash path?',
+  ],
+  'INVESTIGATOR': [
+    'How does the system show me AI confidence on a tagged clip?',
+    'What do I do if the AI gets the timestamp wrong?',
+    'How long does it take to locate a key moment in a 45-minute video?',
+    'Can I compare results from different AI models on the same footage?',
+    'What happens to my footage if I lose connectivity mid-upload?',
+    'How do I flag a wrong AI result without disrupting the evidence record?',
+  ],
+};
 
 /* ─── Global CSS (injected once) ─────────────────────────────────────────── */
 
@@ -565,12 +600,69 @@ const S = {
     marginTop:       6,
     letterSpacing:   '0.05em',
   },
+
+  roleBar: {
+    display:         'flex',
+    alignItems:      'center',
+    gap:             6,
+    padding:         '6px 20px',
+    borderBottom:    `1px solid ${C.border}`,
+    background:      C.panel,
+    flexShrink:      0,
+  },
+
+  roleLabel: {
+    fontSize:        9,
+    color:           C.dim,
+    letterSpacing:   '0.10em',
+    marginRight:     2,
+    flexShrink:      0,
+  },
+
+  roleBtn: (active) => ({
+    padding:         '3px 10px',
+    fontSize:        9,
+    fontWeight:      700,
+    letterSpacing:   '0.10em',
+    color:           active ? C.accent : C.dim,
+    background:      active ? C.accentBg : 'transparent',
+    border:          `1px solid ${active ? C.accentBdr : C.border}`,
+    borderRadius:    3,
+    cursor:          'pointer',
+    transition:      'all 0.15s',
+    fontFamily:      'inherit',
+  }),
+
+  startersGrid: {
+    display:         'flex',
+    flexDirection:   'column',
+    gap:             6,
+    width:           '100%',
+    maxWidth:        640,
+    marginTop:       4,
+  },
+
+  starterBtn: {
+    background:      'transparent',
+    border:          `1px solid ${C.border}`,
+    borderRadius:    4,
+    color:           C.dimMid,
+    fontSize:        11,
+    letterSpacing:   '0.02em',
+    padding:         '8px 12px',
+    cursor:          'pointer',
+    textAlign:       'left',
+    fontFamily:      'inherit',
+    lineHeight:      1.5,
+    transition:      'all 0.15s',
+  },
 };
 
 /* ─── Component ──────────────────────────────────────────────────────────── */
 
 export default function HalosPMOS() {
   const [activeTab, setActiveTab]   = useState(0);
+  const [activeRole, setActiveRole] = useState('PM');
   const [messages, setMessages]     = useState([]);
   const [input, setInput]           = useState('');
   const [loading, setLoading]       = useState(false);
@@ -614,11 +706,15 @@ export default function HalosPMOS() {
   }, [messages, loading]);
 
   const buildSystemPrompt = () => {
-    if (!ledger.length) return SYSTEM;
-    const entries = ledger
-      .map(e => `[${e.date}] ${e.stage} | ${e.topic}: ${e.feedback}${e.outcome ? ` → ${e.outcome}` : ''}`)
-      .join('\n');
-    return SYSTEM + `\n\n---\nDECISION LEDGER (${ledger.length} entries — reference these when relevant):\n${entries}`;
+    let prompt = SYSTEM;
+    if (ledger.length) {
+      const entries = ledger
+        .map(e => `[${e.date}] ${e.stage} | ${e.topic}: ${e.feedback}${e.outcome ? ` → ${e.outcome}` : ''}`)
+        .join('\n');
+      prompt += `\n\n---\nDECISION LEDGER (${ledger.length} entries — reference these when relevant):\n${entries}`;
+    }
+    if (ROLE_PROMPTS[activeRole]) prompt += ROLE_PROMPTS[activeRole];
+    return prompt;
   };
 
   const downloadEntry = () => {
@@ -828,6 +924,22 @@ export default function HalosPMOS() {
             </div>
           </div>
 
+          {/* Role selector bar */}
+          <div style={S.roleBar}>
+            <span style={S.roleLabel}>VIEWER —</span>
+            {ROLES.map(role => (
+              <button
+                key={role}
+                style={S.roleBtn(activeRole === role)}
+                onClick={() => setActiveRole(role)}
+                onMouseEnter={e => { if (activeRole !== role) { e.currentTarget.style.color = C.text; e.currentTarget.style.borderColor = C.dimMid; } }}
+                onMouseLeave={e => { if (activeRole !== role) { e.currentTarget.style.color = C.dim; e.currentTarget.style.borderColor = C.border; } }}
+              >
+                {role}
+              </button>
+            ))}
+          </div>
+
           {/* Messages / empty state */}
           <div style={S.messages}>
             {messages.length === 0 ? (
@@ -857,6 +969,18 @@ export default function HalosPMOS() {
                   </div>
                 </div>
                 <div style={S.emptySubtitle}>What would you like to know about the spec?</div>
+                <div style={S.startersGrid}>
+                  {ROLE_STARTERS[activeRole].map((q, i) => (
+                    <button
+                      key={i}
+                      className="starter-btn"
+                      style={S.starterBtn}
+                      onClick={() => sendMessage(q)}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               <>
